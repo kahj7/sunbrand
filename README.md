@@ -1,6 +1,6 @@
-# sunlightbrand.de
+# sunbrand
 
-Portfolio website of Karen Janssen. Plain HTML and CSS, no build step, no CMS.
+Portfolio website of Karen Janssen, live at sunlightbrand.de. Plain HTML and CSS, no build step, no CMS.
 
 ## Structure
 - `index.html` – home: profile, case-study slides, archive
