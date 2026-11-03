@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Navigation for Samsung Gear S — Karen Janssen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,200;0,300;0,400;0,500;0,600;1,200;1,300;1,400;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  /* ──────────────────────────────────────────────
+     Tokens — inherited verbatim from level 1
+     ────────────────────────────────────────────── */
+  :root {
+    --bg-light: #E5E9EB;
+    --ink: #000;
+    --text: #35383F;
+    --muted: #6F706F;
+    --slide-muted: #929292;
+    --red: rgb(180, 48, 57);
+    --gutter-d: 92.5px;
+    --gutter-m: 24px;
+    --maxw-content: 620px;
+    --nav-top: 32px;
+    --nav-right: 32px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Fira Sans", system-ui, sans-serif;
+    background: var(--bg-light);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  a:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+
+  /* ──────────────────────────────────────────────
+     Skip link
+     ────────────────────────────────────────────── */
+  .skip {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 16px;
+    z-index: 100;
+  }
+  .skip:focus { left: 16px; top: 16px; }
+
+  /* ──────────────────────────────────────────────
+     Back link (replaces right-aligned text nav)
+     ────────────────────────────────────────────── */
+  .back-link {
+    position: fixed;
+    top: var(--nav-top);
+    left: var(--nav-right);
+    z-index: 50;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 26px;
+    color: #fff;
+    padding: 8px 0;
+    min-height: 44px;
+    transition: color .18s ease;
+  }
+  /* Once past the dark hero, switch to ink */
+  body.past-hero .back-link { color: var(--text); }
+
+  .back-link__arrow {
+    display: inline-block;
+    width: 22px;
+    height: 12px;
+    position: relative;
+    color: currentColor;
+  }
+  .back-link__arrow::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1.5px;
+    background: currentColor;
+    border-radius: 2px;
+    transform: translateY(-50%);
+    transition: right .22s ease;
+  }
+  .back-link__arrow::after {
+    /* head pointing LEFT */
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-top: 1.5px solid currentColor;
+    border-left: 1.5px solid currentColor;
+    transform: translateY(-50%) rotate(-45deg);
+    transform-origin: center;
+    transition: left .22s ease;
+  }
+  .back-link:hover .back-link__arrow::before { right: -6px; }
+  .back-link:hover .back-link__arrow::after { left: -6px; }
+
+  /* ──────────────────────────────────────────────
+     Hero — matches level-1 Samsung Gear S slide
+     ────────────────────────────────────────────── */
+  .hero {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    color: #fff;
+    isolation: isolate;
+    background-color: #000;
+    /* Aspect-ratio matches the desired crop of the source image (watch top → blue arrow on screen).
+       Content is positioned absolutely below so it doesn't inflate the hero. */
+    aspect-ratio: 1920 / 695;
+    min-height: 360px;
+    max-height: 760px;
+  }
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background: url('../assets/slide-02-samsung-gear.jpg') right 10% / cover no-repeat;
+  }
+  .hero__scrim {
+    /* Stronger left-side darken so title is always legible on the dark wrist */
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(90deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 28%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0) 65%);
+  }
+  .hero__content {
+    position: absolute;
+    left: var(--gutter-d);
+    top: 50%;
+    transform: translateY(-50%);
+    max-width: 740px;
+    display: flex;
+    flex-direction: column;
+  }
+  .hero__meta + .hero__title { margin-top: 12px; }
+  .hero__title + .hero__subtitle { margin-top: 24px; }
+  .hero__subtitle + .hero__desc { margin-top: 0; }
+  .hero__meta {
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 14px;
+    color: #C4C4C4;
+    margin: 0;
+  }
+  .hero__title {
+    font-family: "Fira Sans", sans-serif;
+    font-weight: 400;
+    font-size: 48px;
+    line-height: 1;
+    color: #fff;
+    margin: 0;
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+  }
+  .hero__subtitle {
+    font-weight: 300;
+    font-size: 24px;
+    line-height: 1.5;
+    color: #fff;
+    margin: 0;
+  }
+  .hero__desc {
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 26px;
+    color: #C4C4C4;
+    margin: 0;
+    max-width: 620px;
+    text-wrap: pretty;
+  }
+
+  /* ──────────────────────────────────────────────
+     3-column intro block (light bg)
+     ────────────────────────────────────────────── */
+  .intro {
+    background: var(--bg-light);
+    padding: 40px var(--gutter-d) 96px;
+  }
+  /* ── Intro 3-column layout — proportions lifted from the Figma source.
+     Figma tracks (px):  col1 372 · gap 35 · col2 368 · gap 124 · col3 218.
+     Encoded as fr so all three columns always sit side-by-side and the
+     wide gap before the meta column is preserved at every width. Capped
+     at the Figma content width so it never upscales; left-aligned to the
+     title. */
+  .intro__grid {
+    display: grid;
+    grid-template-columns: 372fr 35fr 368fr 124fr 218fr;
+    align-items: start;
+    max-width: 1117px;
+    row-gap: 56px;
+  }
+  .intro__col {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    position: relative;
+  }
+  .intro__col--left   { grid-column: 1; }
+  .intro__col--middle { grid-column: 3; }
+  .intro__col--right  { grid-column: 5; }
+  .intro__col--right .intro__bar {
+    position: absolute;
+    top: -8px;
+    left: 0;
+    width: 16px;
+    height: 2px;
+    background: var(--red);
+    display: block;
+  }
+  /* Lead quote — Fira Sans italic, red. Figma: 24px; weight per art direction. */
+  .intro__pullquote {
+    font-family: "Fira Sans", sans-serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--red);
+    margin: 0;
+    text-wrap: balance;
+  }
+  .intro__section { display: flex; flex-direction: column; gap: 10px; }
+  /* Tighten the title→body gap in the right column */
+  .intro__col--right .intro__section { gap: 4px; }
+  /* Section labels — Fira Sans Regular 20 (Figma) */
+  .intro__label {
+    font-family: "Fira Sans", sans-serif;
+    font-weight: 400;
+    font-size: 19px;
+    line-height: 1.3;
+    color: var(--ink);
+    margin: 0;
+  }
+  /* Left + middle body — Fira Sans Light 15 (slightly stronger + smaller) */
+  .intro__body {
+    font-family: "Fira Sans", sans-serif;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--text);
+    margin: 0;
+    text-wrap: balance;
+  }
+  /* Right column — titles lighter (ExtraLight), body Regular; both 15 */
+  .intro__col--right .intro__label {
+    font-weight: 200;
+    font-size: 15px;
+    line-height: 1.3;
+  }
+  .intro__col--right .intro__body {
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 1.5;
+    text-wrap: balance;
+  }
+  .intro__links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .intro__links a {
+    color: var(--text);
+    border-bottom: 1px solid rgba(53, 56, 63, 0.25);
+    padding-bottom: 2px;
+    transition: border-color .18s ease;
+    display: inline-block;
+    font-weight: 300;
+  }
+  .intro__links a:hover { border-color: var(--ink); }
+  .intro__placeholder {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--muted);
+    font-style: italic;
+    margin: 0;
+  }
+
+  /* ──────────────────────────────────────────────
+     Body sections — two-column + full-width variants
+     ────────────────────────────────────────────── */
+  .section {
+    background: var(--bg-light);
+    padding: 0 var(--gutter-d) 120px;
+  }
+  /* 5/12 + 7/12 — text column narrower than visual column.
+     Tell me the exact split you want and I'll match it. */
+  .section__grid {
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    column-gap: 80px;
+    row-gap: 24px;
+    align-items: start;
+  }
+  .section__grid--reverse {
+    grid-template-columns: 7fr 5fr;
+  }
+  .section__grid--reverse .section__text { grid-column: 2; grid-row: 1; }
+  .section__grid--reverse .section__figure { grid-column: 1; grid-row: 1; }
+
+  /* Section titles below the outline — match the "Approach" label style */
+  .section__heading {
+    font-family: "Fira Sans", sans-serif;
+    font-weight: 400;
+    font-size: 19px;
+    line-height: 1.3;
+    color: var(--ink);
+    margin: 0 0 16px;
+    letter-spacing: 0;
+    text-wrap: balance;
+  }
+  .section__body {
+    font-family: "Fira Sans", sans-serif;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 24px;
+    color: var(--text);
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .section__body + .section__body { margin-top: 16px; }
+
+  .section__figure { margin: 0; }
+  .section__visual {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #CFD3D5;
+    display: block;
+    overflow: hidden;
+  }
+  .section__visual img,
+  .section__visual video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* Placeholder: hatched + label, same vocabulary as level-1 archive */
+  .section__visual--empty {
+    background:
+      repeating-linear-gradient(45deg, rgba(0,0,0,0.04) 0 1px, transparent 1px 12px),
+      #CFD3D5;
+  }
+  .section__visual--empty::after {
+    content: attr(data-placeholder);
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    font-family: "Fira Sans", ui-monospace, monospace;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--slide-muted);
+    pointer-events: none;
+    letter-spacing: 0.02em;
+  }
+  .section__caption {
+    font-family: "Fira Sans", sans-serif;
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 21px;
+    color: var(--muted);
+    margin: 16px 0 0;
+    text-wrap: pretty;
+  }
+
+  /* Full-width variant */
+  .section--full .section__heading { margin-bottom: 40px; max-width: 900px; }
+  .section--full .section__body { max-width: 740px; margin-bottom: 40px; }
+  .section--full .section__visual { aspect-ratio: 16 / 9; }
+
+  /* ──────────────────────────────────────────────
+     Closing summary — "What This Required"
+     ────────────────────────────────────────────── */
+  .closing {
+    background: var(--bg-light);
+    padding: 80px var(--gutter-d) 160px;
+  }
+  /* Closing title — match the "Approach" label style */
+  .closing__heading {
+    font-family: "Fira Sans", sans-serif;
+    font-weight: 400;
+    font-size: 19px;
+    line-height: 1.3;
+    color: var(--ink);
+    margin: 0 0 40px;
+    letter-spacing: 0;
+  }
+  .closing__list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 80px;
+    row-gap: 40px;
+    max-width: 1240px;
+  }
+  .closing__item {
+    font-family: "Fira Sans", sans-serif;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 24px;
+    color: var(--text);
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .closing__item strong {
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .closing__placeholder {
+    border: 1px dashed rgba(53, 56, 63, 0.25);
+    padding: 24px;
+    background: transparent;
+  }
+  .closing__placeholder::before {
+    content: "placeholder — summary to be written";
+    grid-column: 1 / -1;
+    display: block;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--muted);
+    font-style: italic;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  /* ──────────────────────────────────────────────
+     Footer return
+     ────────────────────────────────────────────── */
+  .return {
+    background: var(--bg-light);
+    padding: 0 var(--gutter-d) 120px;
+  }
+  .return__list {
+    margin: 0;
+    padding: 32px 0 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-top: 1px solid rgba(53, 56, 63, 0.15);
+  }
+  .return a {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 26px;
+    color: var(--text);
+    padding: 10px 0;
+    min-height: 44px;
+  }
+  .return__arrow {
+    display: inline-block;
+    width: 22px;
+    height: 12px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .return__arrow::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1.5px;
+    background: currentColor;
+    border-radius: 2px;
+    transform: translateY(-50%);
+  }
+  .return__arrow::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-top: 1.5px solid currentColor;
+    border-left: 1.5px solid currentColor;
+    transform: translateY(-50%) rotate(-45deg);
+    transition: left .22s ease;
+  }
+  .return a:hover .return__arrow::after { left: -6px; }
+
+  /* ──────────────────────────────────────────────
+     Reduced motion
+     ────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  /* ──────────────────────────────────────────────
+     Tablet — fixed breakpoint. Two content columns keep a FIXED width so
+     their line breaks don't move; the meta column drops full-width below.
+     ────────────────────────────────────────────── */
+  @media (max-width: 1240px) {
+    .hero { min-height: 320px; }
+    .hero__content { left: 56px; }
+    .hero__title { font-size: 40px; }
+    .hero__subtitle { font-size: 22px; }
+
+    .intro { padding: 96px 56px 96px; }
+
+    .section { padding: 0 56px 96px; }
+    .section__grid { column-gap: 48px; }
+
+    .closing { padding: 64px 56px 120px; }
+    .closing__list { column-gap: 48px; }
+
+    .return { padding: 0 56px 96px; }
+  }
+
+  /* ──────────────────────────────────────────────
+     Mobile — fixed breakpoint. Single column.
+     ────────────────────────────────────────────── */
+  @media (max-width: 880px) {
+    .back-link { top: 20px; left: var(--gutter-m); font-size: 14px; }
+
+    .hero {
+      padding: 0;
+      min-height: 360px;
+    }
+    .hero__content { left: var(--gutter-m); }
+    .hero__title { font-size: 32px; }
+    .hero__subtitle { font-size: 19px; line-height: 1.45; }
+    .hero__meta { font-size: 13px; }
+    .hero__desc { font-size: 15px; line-height: 24px; }
+    .hero__scrim {
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.75) 100%);
+    }
+    .hero__title + .hero__subtitle { margin-top: 24px; }
+
+    .intro { padding: 64px var(--gutter-m) 64px; }
+    /* Single column — columns stack, each capped to its Figma width. */
+    .intro__grid { display: flex; flex-direction: column; max-width: none; row-gap: 48px; }
+    .intro__col { gap: 32px; }
+    .intro__col--left,
+    .intro__col--middle,
+    .intro__col--right { width: 100%; max-width: 460px; }
+    .intro__col--right { gap: 32px; }
+    .intro__col--right .intro__bar { position: static; margin-bottom: 8px; }
+
+    .section { padding: 0 var(--gutter-m) 64px; }
+    .section__grid { grid-template-columns: 1fr; row-gap: 32px; }
+    .section__grid--reverse .section__text,
+    .section__grid--reverse .section__figure {
+      grid-column: 1;
+    }
+    .section__grid--reverse .section__text { grid-row: 1; }
+    .section__grid--reverse .section__figure { grid-row: 2; }
+    .section__heading { margin-bottom: 16px; }
+    .section--full .section__heading { margin-bottom: 24px; }
+    .section--full .section__body { margin-bottom: 24px; }
+
+    .closing { padding: 48px var(--gutter-m) 80px; }
+    .closing__heading { margin-bottom: 32px; }
+    .closing__list { grid-template-columns: 1fr; row-gap: 28px; }
+
+    .return { padding: 0 var(--gutter-m) 64px; }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip">Skip to content</a>
+
+<a class="back-link" href="../#case-5" aria-label="Home — Karen Janssen">
+  <span class="back-link__arrow" aria-hidden="true"></span>
+</a>
+
+<main id="main">
+
+  <!-- ──────────────────────────────────────────────
+       1. Hero — mirrors the level-1 Samsung Gear S slide
+       ────────────────────────────────────────────── -->
+  <section class="hero" data-screen-label="Samsung Gear S — Hero" aria-labelledby="page-title">
+    <div class="hero__media" role="presentation"></div>
+    <div class="hero__scrim" role="presentation"></div>
+    <div class="hero__content">
+      <p class="hero__meta">2014 &nbsp;•&nbsp; Customer Engagement &nbsp;•&nbsp; Product Design &nbsp;•&nbsp; Roadmap Planning &nbsp;•&nbsp; Implementation</p>
+      <h1 class="hero__title" id="page-title">Navigation for Samsung Gear S</h1>
+      <p class="hero__subtitle">From customer proposal to product release</p>
+      <p class="hero__desc">HERE partnered with Samsung to bring its maps and location platform services to the newly-announced Samsung Gear S and subsequently to all Samsung's Tizen-powered smart devices.</p>
+    </div>
+  </section>
+
+  <!-- ──────────────────────────────────────────────
+       2. 3-column intro block
+       ────────────────────────────────────────────── -->
+  <section class="intro" data-screen-label="Samsung Gear S — Intro" aria-label="Project overview">
+    <div class="intro__grid">
+
+      <div class="intro__col intro__col--left">
+        <p class="intro__pullquote">
+          This partnership not only brought HERE a multi-million dollar deal, but also broadened its reach to users and businesses across screens and operating systems.
+        </p>
+        <div class="intro__section">
+          <h2 class="intro__label">Challenge</h2>
+          <p class="intro__body">Design and ship a navigation app in three months — for a device that didn't exist yet. The hardware and software were being built in parallel, by two separate companies, with no template for what wearable navigation should even look like.</p>
+        </div>
+      </div>
+
+      <div class="intro__col intro__col--middle">
+        <div class="intro__section">
+          <h2 class="intro__label">Approach</h2>
+          <p class="intro__body">Working in daily sync with Samsung's development team to translate HERE's maps and location platform into a glance-able wearable experience — rethinking navigation for a new form factor from the ground up.</p>
+        </div>
+        <div class="intro__section">
+          <h2 class="intro__label">Outcome</h2>
+          <p class="intro__body">HERE for Gear launched at IFA 2014 as the first wearable navigation application of its kind, securing a multi-million dollar deal and leading to HERE maps being preinstalled across all Samsung Tizen-powered devices.</p>
+        </div>
+      </div>
+
+      <div class="intro__col intro__col--right">
+        <span class="intro__bar" aria-hidden="true"></span>
+        <div class="intro__section">
+          <h2 class="intro__label">Role</h2>
+          <p class="intro__body">Led all stages of product design including ideation, identification, evaluation, pitch case, UI/UX, IA, product strategy, visual design, user research and launch.</p>
+        </div>
+        <div class="intro__section">
+          <h2 class="intro__label">Collaboration</h2>
+          <p class="intro__body">BU Executive Team · Development · Sales · Product Marketing · Brand · Design</p>
+        </div>
+        <div class="intro__section">
+          <h2 class="intro__label">Links &amp; Press</h2>
+          <p class="intro__placeholder">placeholder — links to be added</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ──────────────────────────────────────────────
+       3. Body sections — order per PDF; layout per brief
+       ────────────────────────────────────────────── -->
+
+  <!-- Winning the partnership — 2-col, image right -->
+  <section class="section" data-screen-label="Samsung Gear S — Winning the partnership" aria-labelledby="sec-winning">
+    <div class="section__grid">
+      <div class="section__text">
+        <h2 class="section__heading" id="sec-winning">Winning the partnership</h2>
+        <p class="section__body">Samsung had announced the Gear S — a wearable with a curved screen and a data connection of its own. HERE saw an opportunity to bring its maps and location platform to a device category that had no serious navigation experience yet. Winning the partnership meant building a compelling enough product vision to close a multimillion dollar deal, then delivering it in three months alongside a device that was still being built.</p>
+      </div>
+      <figure class="section__figure">
+        <div class="section__visual section__visual--empty" data-placeholder="image &middot; pitch / proposal materials  &middot;  from sunlightbrand.de/slide/navigation-app-for-samsung-gear-s/"></div>
+        <figcaption class="section__caption">Pitch and proposal materials presented to Samsung — placeholder until image is supplied.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Building in parallel — 2-col, image left -->
+  <section class="section" data-screen-label="Samsung Gear S — Building in parallel" aria-labelledby="sec-parallel">
+    <div class="section__grid section__grid--reverse">
+      <div class="section__text">
+        <h2 class="section__heading" id="sec-parallel">Building in parallel</h2>
+        <p class="section__body">The hardest part wasn't designing for a new form factor. It was that the device itself didn't exist yet. The application and the hardware were being built simultaneously, by two companies, in two countries. That meant decisions made in Berlin had immediate consequences in Seoul — and vice versa. Daily software exchange kept both sides in sync, but it also meant the design had to be resilient enough to absorb constant change without losing coherence.</p>
+      </div>
+      <figure class="section__figure">
+        <div class="section__visual section__visual--empty" data-placeholder="image &middot; cross-team workflow / parallel builds &middot; from sunlightbrand.de"></div>
+        <figcaption class="section__caption">Daily software exchange between HERE and Samsung kept the application and the device on the same release path — placeholder until image is supplied.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Designing for the wrist — 2-col, image right -->
+  <section class="section" data-screen-label="Samsung Gear S — Designing for the wrist" aria-labelledby="sec-wrist">
+    <div class="section__grid">
+      <div class="section__text">
+        <h2 class="section__heading" id="sec-wrist">Designing for the wrist</h2>
+        <p class="section__body">A wearable navigation experience demands a different kind of clarity. Users glance at their wrist for two seconds while moving through the world — there's no room for hierarchy, no tolerance for ambiguity. Every screen was stripped back to the single most important piece of information for that moment. Turn-by-turn guidance, public transport routing, live traffic — all reimagined around a fundamentally different relationship between the user and the device.</p>
+      </div>
+      <figure class="section__figure">
+        <div class="section__visual section__visual--empty" data-placeholder="image &middot; wrist-scale UI explorations &middot; from sunlightbrand.de"></div>
+        <figcaption class="section__caption">Wrist-scale interaction studies — designing for a two-second glance while moving. Placeholder until image is supplied.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Release 1 — full-width -->
+  <section class="section section--full" data-screen-label="Samsung Gear S — Release 1" aria-labelledby="sec-r1">
+    <h2 class="section__heading" id="sec-r1">Release 1</h2>
+    <p class="section__body">HERE for Gear launched at IFA 2014, three months from concept to release. It was the first application to offer turn-by-turn walk navigation and public transit routing on a wearable device — covering 100 countries for drive and walk guidance, 750+ cities across 40+ countries for public transport, and live traffic for 40+ countries.</p>
+    <figure class="section__figure">
+      <div class="section__visual section__visual--empty" data-placeholder="full-width media &middot; Release 1 launch video / product shot &middot; from sunlightbrand.de"></div>
+      <figcaption class="section__caption">HERE for Gear, Release 1 — IFA 2014. Turn-by-turn walk navigation, public transit routing and live traffic on the wrist. Placeholder until media is supplied.</figcaption>
+    </figure>
+  </section>
+
+  <!-- Release 2 — full-width -->
+  <section class="section section--full" data-screen-label="Samsung Gear S — Release 2" aria-labelledby="sec-r2">
+    <h2 class="section__heading" id="sec-r2">Release 2 — going standalone</h2>
+    <p class="section__body">The second release removed the dependency on a paired phone entirely. Offline map storage meant users could navigate, search and get directions independently. New map styles adapted to context — public transport, pedestrian, night mode. The manoeuvre view was redesigned to show each instruction in the context of the surrounding route, giving users orientation rather than just a command.</p>
+    <figure class="section__figure">
+      <div class="section__visual section__visual--empty" data-placeholder="full-width media &middot; Release 2 — standalone, new map styles, redesigned manoeuvre view &middot; from sunlightbrand.de"></div>
+      <figcaption class="section__caption">Release 2 — offline maps, context-aware styles (transit / pedestrian / night) and the redesigned manoeuvre view. Placeholder until media is supplied.</figcaption>
+    </figure>
+  </section>
+
+  <!-- Refining through testing — 2-col, image left -->
+  <section class="section" data-screen-label="Samsung Gear S — Refining through testing" aria-labelledby="sec-testing">
+    <div class="section__grid section__grid--reverse">
+      <div class="section__text">
+        <h2 class="section__heading" id="sec-testing">Refining through testing</h2>
+        <p class="section__body">Throughout development, the interface was tested directly on the physical device — not on screen, not in simulation. Interaction patterns that worked in Figma sometimes failed at wrist scale, in motion, in real conditions. Iterative testing caught those gaps early and kept the experience honest.</p>
+      </div>
+      <figure class="section__figure">
+        <div class="section__visual section__visual--empty" data-placeholder="image &middot; on-device usability testing &middot; from sunlightbrand.de"></div>
+        <figcaption class="section__caption">Iterative usability testing on the physical device, in motion. Placeholder until image is supplied.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- The result — 2-col, image right -->
+  <section class="section" data-screen-label="Samsung Gear S — The result" aria-labelledby="sec-result">
+    <div class="section__grid">
+      <div class="section__text">
+        <h2 class="section__heading" id="sec-result">The result</h2>
+        <p class="section__body">The product launched on time. The partnership secured a multi-million dollar deal and led to HERE maps being preinstalled across all Samsung Gear S and Tizen-powered mobile devices — extending HERE's reach well beyond the original brief and establishing a template for future platform partnerships.</p>
+      </div>
+      <figure class="section__figure">
+        <div class="section__visual section__visual--empty" data-placeholder="image &middot; preinstalled across Samsung Tizen devices &middot; from sunlightbrand.de"></div>
+        <figcaption class="section__caption">HERE maps preinstalled across Samsung Gear S and Tizen-powered devices. Placeholder until image is supplied.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ──────────────────────────────────────────────
+       4. What This Required — closing summary
+       ────────────────────────────────────────────── -->
+  <section class="closing" data-screen-label="Samsung Gear S — What this required" aria-labelledby="sec-closing">
+    <h2 class="closing__heading" id="sec-closing">What this required</h2>
+    <div class="closing__list closing__placeholder">
+      <p class="closing__item"><strong>Bold lead phrase —</strong> short paragraph explaining the first thing this project required, in plain language. Three or four of these total. To be written.</p>
+      <p class="closing__item"><strong>Bold lead phrase —</strong> short paragraph for the second item. To be written.</p>
+      <p class="closing__item"><strong>Bold lead phrase —</strong> short paragraph for the third item. To be written.</p>
+      <p class="closing__item"><strong>Bold lead phrase —</strong> short paragraph for the optional fourth item. To be written.</p>
+    </div>
+  </section>
+
+
+
+</main>
+
+<script>
+  // Switch the fixed back-link colour from white to ink once the user scrolls past the hero.
+  (function () {
+    const hero = document.querySelector('.hero');
+    if (!hero) return;
+    const io = new IntersectionObserver(
+      function (entries) {
+        const e = entries[0];
+        // hero leaves the viewport from the top → we're past it
+        document.body.classList.toggle('past-hero', !e.isIntersecting && e.boundingClientRect.top < 0);
+      },
+      { threshold: 0, rootMargin: '-64px 0px 0px 0px' }
+    );
+    io.observe(hero);
+  })();
+</script>
+
+</body>
+</html>
