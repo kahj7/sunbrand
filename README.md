@@ -1,6 +1,6 @@
 # sunbrand
 
-Portfolio website of Karen Janssen – sunlightbrand.de.
+Portfolio website of Karen Janssen – sunbrand.org.
 Plain HTML, CSS and a small script. No CMS, no build step.
 
 ## Structure
